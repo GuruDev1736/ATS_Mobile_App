@@ -1,0 +1,29 @@
+name: ata_mobile
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.2.2
+  intl: ^0.19.0
+  http: ^0.13.6
+  mime: ^1.0.4
+  table_calendar: ^3.0.9
+  font_awesome_flutter: ^10.7.0
+  dio: ^5.8.0+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
