@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:ata_mobile/DioService/api_service.dart';
 import 'package:ata_mobile/Screens/Auth/ChangePassword.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
   Timer? _timer;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -68,19 +70,26 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
     });
   }
 
-  void _resendOTP() {
-    setState(() {
-      _canResend = false;
-      _resendTimer = 60;
-    });
-    _startResendTimer();
+  Future<void> _resendOTP() async {
+    final response = await apiService.sendOtp(widget.email);
+    if (response['STS'] == "200") {
+      setState(() {
+        _canResend = false;
+        _resendTimer = 60;
+      });
+      _startResendTimer();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('OTP resent successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OTP resent successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['error']), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<void> _verifyOTP() async {
@@ -100,20 +109,31 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
       _isLoading = true;
     });
 
-    // Simulate API call
-    await Future.delayed(Duration(seconds: 2));
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    // Navigate to Change Password screen
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ChangePasswordScreen(email: widget.email),
-      ),
-    );
+    final response = await apiService.validateOTP(widget.email, otp);
+    if (response['STS'] == "200") {
+      setState(() {
+        _isLoading = false;
+      });
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChangePasswordScreen(email: widget.email),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OTP verified successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['error']), backgroundColor: Colors.red),
+      );
+    }
   }
 
   void _onOTPChanged(String value, int index) {
@@ -210,7 +230,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                           height: 1.5,
                         ),
                         children: [
-                          TextSpan(text: 'We\'ve sent a 6-digit OTP to\n'),
+                          TextSpan(text: 'We\'ve sent a 4-digit OTP to\n'),
                           TextSpan(
                             text: widget.email,
                             style: TextStyle(

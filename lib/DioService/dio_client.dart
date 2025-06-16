@@ -31,6 +31,9 @@ class DioClient {
         onRequest: (options, handler) async {
           // Skip token for login or public routes
           if (options.path.contains('/auth/login') ||
+              options.path.contains('/auth/sendOTP') ||
+              options.path.contains('/auth/verifyOTP') ||
+              options.path.contains('/auth/resetPassword') ||
               options.path.contains('/public')) {
             return handler.next(options);
           }

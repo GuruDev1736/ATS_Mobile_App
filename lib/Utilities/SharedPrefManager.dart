@@ -23,6 +23,7 @@ class SharedPrefManager {
   static const String userPhoneKey = 'user_phone';
   static const String userProfileImageKey = 'user_profile_image';
   static const String userPasswordKey = 'user_password';
+  static const String rememberMeKey = 'remember_me';
 
   // Ensure prefs are available
   Future<SharedPreferences> get _instancePrefs async =>

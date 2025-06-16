@@ -1,3 +1,4 @@
+import 'package:ata_mobile/DioService/api_service.dart';
 import 'package:flutter/material.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
   bool _isLoading = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -47,15 +49,26 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
         _isLoading = true;
       });
 
-      // Simulate API call
-      await Future.delayed(Duration(seconds: 2));
-
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Show success dialog
-      _showSuccessDialog();
+      final response = await apiService.changePassword(
+        widget.email,
+        _newPasswordController.text,
+      );
+      if (response['STS'] == "200") {
+        setState(() {
+          _isLoading = false;
+        });
+        _showSuccessDialog();
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['error']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

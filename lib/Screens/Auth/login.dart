@@ -34,6 +34,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    loadCredentials();
   }
 
   void loadCredentials() async {
@@ -42,6 +43,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     );
     String? password = await sharedPrefManager.getString(
       SharedPrefManager.userPasswordKey,
+    );
+
+    _rememberMe = await sharedPrefManager.getBool(
+      SharedPrefManager.rememberMeKey,
     );
 
     setState(() {
@@ -85,16 +90,34 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
             userRole,
           );
 
-          await sharedPrefManager.setString(
-            SharedPrefManager.userEmailKey,
-            _emailController.text.trim(),
-          );
+          if (_rememberMe) {
+            await sharedPrefManager.setString(
+              SharedPrefManager.userEmailKey,
+              _emailController.text.trim(),
+            );
+            await sharedPrefManager.setString(
+              SharedPrefManager.userPasswordKey,
+              _passwordController.text.trim(),
+            );
 
-          await sharedPrefManager.setString(
-            SharedPrefManager.userPasswordKey,
-            _passwordController.text.trim(),
-          );
-
+            await sharedPrefManager.setBool(
+              SharedPrefManager.rememberMeKey,
+              true,
+            );
+          } else {
+            await sharedPrefManager.setString(
+              SharedPrefManager.userEmailKey,
+              '',
+            );
+            await sharedPrefManager.setString(
+              SharedPrefManager.userPasswordKey,
+              '',
+            );
+            await sharedPrefManager.setBool(
+              SharedPrefManager.rememberMeKey,
+              false,
+            );
+          }
           // Navigate or show success
           ScaffoldMessenger.of(
             context,

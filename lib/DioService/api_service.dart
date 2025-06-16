@@ -36,6 +36,39 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> validateOTP(String email, String otp) async {
+    try {
+      final response = await _dio.post('auth/verifyOTP?email=$email&otp=$otp');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> changePassword(
+    String email,
+    String newPassword,
+  ) async {
+    try {
+      final response = await _dio.post(
+        'auth/resetPassword?email=$email&newPassword=$newPassword',
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
   Future<Map<String, dynamic>> addDepartment(
     String title,
     String description,
