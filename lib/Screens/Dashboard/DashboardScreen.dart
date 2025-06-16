@@ -1,3 +1,4 @@
+import 'package:ata_mobile/Utilities/SharedPrefManager.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -10,6 +11,31 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late String userName;
+  late String userEmail;
+  late String userProfileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() async {
+    userName =
+        await SharedPrefManager().getString(
+          SharedPrefManager.userFullNameKey,
+        ) ??
+        '';
+    userEmail =
+        await SharedPrefManager().getString(SharedPrefManager.userEmailKey) ??
+        '';
+    userProfileImage =
+        await SharedPrefManager().getString(
+          SharedPrefManager.userProfileImageKey,
+        ) ??
+        '';
+  }
 
   final List<Widget> _screens = [
     HomeScreen(),
@@ -120,122 +146,153 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildSideDrawer() {
-    return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.yellow.shade300,
-              Colors.yellow.shade100,
-              Colors.white,
-            ],
-          ),
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.yellow.shade400),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(
-                      Icons.person,
-                      size: 40,
-                      color: Colors.yellow.shade700,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'John Doe',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'john.doe@email.com',
-                    style: TextStyle(color: Colors.black54, fontSize: 14),
-                  ),
+    return FutureBuilder<String?>(
+      future: SharedPrefManager().getString(SharedPrefManager.userRoleKey),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Drawer(child: Center(child: CircularProgressIndicator()));
+        }
+
+        final role = snapshot.data;
+
+        return Drawer(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.yellow.shade300,
+                  Colors.yellow.shade100,
+                  Colors.white,
                 ],
               ),
             ),
-            _buildDrawerItem(
-              icon: Icons.dashboard_outlined,
-              title: 'Dashboard',
-              onTap: () {
-                Navigator.pop(context);
-                setState(() {
-                  _selectedIndex = 0;
-                });
-              },
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                DrawerHeader(
+                  decoration: BoxDecoration(color: Colors.yellow.shade400),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: Colors.white,
+                        child: ClipOval(
+                          child: Image.network(
+                            userProfileImage,
+                            fit: BoxFit.cover,
+                            width: 60,
+                            height: 60,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.yellow.shade700,
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      Text(
+                        userName,
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        userEmail,
+                        style: TextStyle(color: Colors.black54, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+                _buildDrawerItem(
+                  icon: Icons.dashboard_outlined,
+                  title: 'Dashboard',
+                  onTap: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      _selectedIndex = 0;
+                    });
+                  },
+                ),
+                if (role == 'ROLE_ADMIN') ...[
+                  _buildDrawerItem(
+                    icon: Icons.person_add_outlined,
+                    title: 'Add Employee',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showComingSoon(context, 'Add Employee');
+                    },
+                  ),
+                ],
+                _buildDrawerItem(
+                  icon: Icons.analytics_outlined,
+                  title: 'Analytics',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Analytics');
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.folder_outlined,
+                  title: 'Projects',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Projects');
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.group_outlined,
+                  title: 'Team',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Team');
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.calendar_today_outlined,
+                  title: 'Calendar',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Calendar');
+                  },
+                ),
+                Divider(color: Colors.black26),
+                _buildDrawerItem(
+                  icon: Icons.settings_outlined,
+                  title: 'Settings',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Settings');
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.help_outline,
+                  title: 'Help & Support',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showComingSoon(context, 'Help & Support');
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.logout_outlined,
+                  title: 'Logout',
+                  onTap: () {
+                    Navigator.pop(context);
+                    _showLogoutDialog(context);
+                  },
+                ),
+              ],
             ),
-            _buildDrawerItem(
-              icon: Icons.analytics_outlined,
-              title: 'Analytics',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Analytics');
-              },
-            ),
-            _buildDrawerItem(
-              icon: Icons.folder_outlined,
-              title: 'Projects',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Projects');
-              },
-            ),
-            _buildDrawerItem(
-              icon: Icons.group_outlined,
-              title: 'Team',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Team');
-              },
-            ),
-            _buildDrawerItem(
-              icon: Icons.calendar_today_outlined,
-              title: 'Calendar',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Calendar');
-              },
-            ),
-            Divider(color: Colors.black26),
-            _buildDrawerItem(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Settings');
-              },
-            ),
-            _buildDrawerItem(
-              icon: Icons.help_outline,
-              title: 'Help & Support',
-              onTap: () {
-                Navigator.pop(context);
-                _showComingSoon(context, 'Help & Support');
-              },
-            ),
-            _buildDrawerItem(
-              icon: Icons.logout_outlined,
-              title: 'Logout',
-              onTap: () {
-                Navigator.pop(context);
-                _showLogoutDialog(context);
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

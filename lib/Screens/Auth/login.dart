@@ -73,6 +73,9 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           final fullName = content['fullName'];
           final userId = content['userId'];
           final userRole = content['userRole'];
+          final userProfilePicture = content['userProfilePic'];
+
+          print(userProfilePicture);
 
           // Store in SharedPreferences
 
@@ -88,6 +91,10 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           await sharedPrefManager.setString(
             SharedPrefManager.userRoleKey,
             userRole,
+          );
+          await sharedPrefManager.setString(
+            SharedPrefManager.userProfileImageKey,
+            userProfilePicture ?? '',
           );
 
           if (_rememberMe) {
