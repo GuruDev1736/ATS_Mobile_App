@@ -8,8 +8,7 @@ import 'package:flutter/services.dart';
 class OTPVerificationScreen extends StatefulWidget {
   final String email;
 
-  const OTPVerificationScreen({Key? key, required this.email})
-    : super(key: key);
+  const OTPVerificationScreen({super.key, required this.email});
 
   @override
   _OTPVerificationScreenState createState() => _OTPVerificationScreenState();
@@ -346,7 +345,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                           SizedBox(height: 20),
 
                           // Verify Button
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             height: 55,
                             child: ElevatedButton(

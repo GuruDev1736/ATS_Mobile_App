@@ -1,3 +1,7 @@
+import 'package:ata_mobile/Screens/Dashboard/Department/AddDepartment.dart';
+import 'package:ata_mobile/Screens/Dashboard/Department/showDepartment.dart';
+import 'package:ata_mobile/Screens/Dashboard/Employee/AddEmployee.dart';
+import 'package:ata_mobile/Screens/Dashboard/Employee/EmployeeList.dart';
 import 'package:ata_mobile/Utilities/SharedPrefManager.dart';
 import 'package:flutter/material.dart';
 
@@ -227,7 +231,26 @@ class _DashboardPageState extends State<DashboardPage> {
                     title: 'Add Employee',
                     onTap: () {
                       Navigator.pop(context);
-                      _showComingSoon(context, 'Add Employee');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EmployeeListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add Department',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DepartmentsListScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],

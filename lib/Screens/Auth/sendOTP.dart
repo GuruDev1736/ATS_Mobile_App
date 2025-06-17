@@ -6,6 +6,8 @@ import 'dart:async';
 
 // Step 1: Email Input Screen
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
@@ -236,7 +238,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               SizedBox(height: 30),
 
                               // Send OTP Button
-                              Container(
+                              SizedBox(
                                 width: double.infinity,
                                 height: 55,
                                 child: ElevatedButton(

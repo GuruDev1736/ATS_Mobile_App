@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class ChangePasswordScreen extends StatefulWidget {
   final String email;
 
-  const ChangePasswordScreen({Key? key, required this.email}) : super(key: key);
+  const ChangePasswordScreen({super.key, required this.email});
 
   @override
   _ChangePasswordScreenState createState() => _ChangePasswordScreenState();
@@ -116,7 +116,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
                 ),
               ),
               SizedBox(height: 25),
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
@@ -358,7 +358,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen>
                             ),
                             SizedBox(height: 30),
                             // Change Password Button
-                            Container(
+                            SizedBox(
                               width: double.infinity,
                               height: 55,
                               child: ElevatedButton(
