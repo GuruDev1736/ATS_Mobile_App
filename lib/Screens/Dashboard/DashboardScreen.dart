@@ -234,7 +234,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EmployeeListScreen(),
+                          builder: (context) =>
+                              EmployeeListScreen(postion: "EMP"),
                         ),
                       );
                     },
@@ -253,39 +254,36 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     },
                   ),
+
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add HR',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EmployeeListScreen(postion: "HR"),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add Manager',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EmployeeListScreen(postion: "Manager"),
+                        ),
+                      );
+                    },
+                  ),
                 ],
-                _buildDrawerItem(
-                  icon: Icons.analytics_outlined,
-                  title: 'Analytics',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showComingSoon(context, 'Analytics');
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.folder_outlined,
-                  title: 'Projects',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showComingSoon(context, 'Projects');
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.group_outlined,
-                  title: 'Team',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showComingSoon(context, 'Team');
-                  },
-                ),
-                _buildDrawerItem(
-                  icon: Icons.calendar_today_outlined,
-                  title: 'Calendar',
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showComingSoon(context, 'Calendar');
-                  },
-                ),
                 Divider(color: Colors.black26),
                 _buildDrawerItem(
                   icon: Icons.settings_outlined,

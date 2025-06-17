@@ -75,7 +75,9 @@ class Employee {
 }
 
 class EmployeeListScreen extends StatefulWidget {
-  const EmployeeListScreen({super.key});
+  final String postion;
+
+  const EmployeeListScreen({super.key, required this.postion});
 
   @override
   State<EmployeeListScreen> createState() => _EmployeeListScreenState();
@@ -132,7 +134,13 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
       _listController.forward();
     });
 
-    _loadEmployees();
+    if (widget.postion == "HR") {
+      _loadHR();
+    } else if (widget.postion == "Manager") {
+      _loadManager();
+    } else if (widget.postion == "EMP") {
+      _loadEmployees();
+    }
     _loadDepartments();
   }
 
@@ -183,6 +191,50 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
     }
   }
 
+  Future<void> _loadManager() async {
+    try {
+      final response = await apiService.getAllManagers();
+      if (response['CONTENT'] is List) {
+        setState(() {
+          _employees = (response['CONTENT'] as List)
+              .map((item) => Employee.fromJson(item))
+              .toList();
+          _filteredEmployees = _employees;
+        });
+      } else {
+        throw Exception("Invalid response format");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error fetching employees: $e')));
+      }
+    }
+  }
+
+  Future<void> _loadHR() async {
+    try {
+      final response = await apiService.getAllHR();
+      if (response['CONTENT'] is List) {
+        setState(() {
+          _employees = (response['CONTENT'] as List)
+              .map((item) => Employee.fromJson(item))
+              .toList();
+          _filteredEmployees = _employees;
+        });
+      } else {
+        throw Exception("Invalid response format");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error fetching employees: $e')));
+      }
+    }
+  }
+
   Future<void> _loadDepartments() async {
     try {
       final response = await apiService.getAllDepartments();
@@ -207,8 +259,20 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
   void _addEmployee() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const AddEmployeeScreen()),
-    );
+      MaterialPageRoute(
+        builder: (context) => AddEmployeeScreen(postion: widget.postion),
+      ),
+    ).then((value) {
+      if (value == true) {
+        if (widget.postion == "HR") {
+          _loadHR();
+        } else if (widget.postion == "Manager") {
+          _loadManager();
+        } else if (widget.postion == "EMP") {
+          _loadEmployees();
+        }
+      }
+    });
   }
 
   void _updateEmployee(Employee employee) {

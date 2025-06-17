@@ -28,7 +28,9 @@ class Department {
 }
 
 class AddEmployeeScreen extends StatefulWidget {
-  const AddEmployeeScreen({Key? key}) : super(key: key);
+  final String postion;
+
+  const AddEmployeeScreen({Key? key, required this.postion}) : super(key: key);
 
   @override
   State<AddEmployeeScreen> createState() => _AddEmployeeScreenState();
@@ -424,33 +426,93 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
         return;
       }
 
-      final response = await apiService.createUser(
-        _fullNameController.text,
-        _emailController.text,
-        _passwordController.text,
-        _phoneController.text,
-        _addressController.text,
-        imageUrl,
-        _joiningDate!.toIso8601String(),
-        int.parse(_salaryController.text),
-        _designationController.text,
-        _shiftStartTime!.format(context),
-        _shiftEndTime!.format(context),
-        _selectedDepartmentId!,
-      );
-
-      if (response['STS'] == '200') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response['MSG'] ?? response['error']),
-            backgroundColor: primaryYellow,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+      if (widget.postion == "HR") {
+        final response = await apiService.createHR(
+          _fullNameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _phoneController.text,
+          _addressController.text,
+          imageUrl,
+          _joiningDate!.toIso8601String(),
+          int.parse(_salaryController.text),
+          _designationController.text,
+          _shiftStartTime!.format(context),
+          _shiftEndTime!.format(context),
+          _selectedDepartmentId!,
         );
-        Navigator.pop(context); // Close the screen after saving
+
+        if (response['STS'] == '200') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['MSG'] ?? response['error']),
+              backgroundColor: primaryYellow,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } else if (widget.postion == "Manager") {
+        final response = await apiService.createManager(
+          _fullNameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _phoneController.text,
+          _addressController.text,
+          imageUrl,
+          _joiningDate!.toIso8601String(),
+          int.parse(_salaryController.text),
+          _designationController.text,
+          _shiftStartTime!.format(context),
+          _shiftEndTime!.format(context),
+          _selectedDepartmentId!,
+        );
+
+        if (response['STS'] == '200') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['MSG'] ?? response['error']),
+              backgroundColor: primaryYellow,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.pop(context, true); // Close the screen after saving
+        }
+      } else if (widget.postion == "EMP") {
+        final response = await apiService.createUser(
+          _fullNameController.text,
+          _emailController.text,
+          _passwordController.text,
+          _phoneController.text,
+          _addressController.text,
+          imageUrl,
+          _joiningDate!.toIso8601String(),
+          int.parse(_salaryController.text),
+          _designationController.text,
+          _shiftStartTime!.format(context),
+          _shiftEndTime!.format(context),
+          _selectedDepartmentId!,
+        );
+
+        if (response['STS'] == '200') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['MSG'] ?? response['error']),
+              backgroundColor: primaryYellow,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          Navigator.pop(context, true); // Close the screen after saving
+        }
       }
     }
   }
