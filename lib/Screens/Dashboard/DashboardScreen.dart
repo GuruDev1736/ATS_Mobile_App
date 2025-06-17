@@ -1,6 +1,5 @@
-import 'package:ata_mobile/Screens/Dashboard/Department/AddDepartment.dart';
+import 'package:ata_mobile/Screens/Dashboard/Attendance/AttendanceDashboard.dart';
 import 'package:ata_mobile/Screens/Dashboard/Department/showDepartment.dart';
-import 'package:ata_mobile/Screens/Dashboard/Employee/AddEmployee.dart';
 import 'package:ata_mobile/Screens/Dashboard/Employee/EmployeeList.dart';
 import 'package:ata_mobile/Utilities/SharedPrefManager.dart';
 import 'package:flutter/material.dart';
@@ -279,6 +278,20 @@ class _DashboardPageState extends State<DashboardPage> {
                         MaterialPageRoute(
                           builder: (context) =>
                               EmployeeListScreen(postion: "Manager"),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    icon: Icons.map_outlined,
+                    title: 'Attendance',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AttendanceDashboard(),
                         ),
                       );
                     },

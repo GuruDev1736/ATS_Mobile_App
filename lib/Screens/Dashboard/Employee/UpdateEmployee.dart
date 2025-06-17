@@ -31,8 +31,7 @@ class Department {
 class UpdateEmployeeScreen extends StatefulWidget {
   final Employee employee;
 
-  const UpdateEmployeeScreen({Key? key, required this.employee})
-    : super(key: key);
+  const UpdateEmployeeScreen({super.key, required this.employee});
 
   @override
   State<UpdateEmployeeScreen> createState() => _UpdateEmployeeScreenState();

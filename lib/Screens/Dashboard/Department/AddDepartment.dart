@@ -1,9 +1,10 @@
 import 'package:ata_mobile/DioService/api_service.dart';
-import 'package:ata_mobile/Utilities/color_constants.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import 'dart:math';
 
 class AddDepartmentScreen extends StatefulWidget {
-  const AddDepartmentScreen({Key? key}) : super(key: key);
+  const AddDepartmentScreen({super.key});
 
   @override
   State<AddDepartmentScreen> createState() => _AddDepartmentScreenState();
@@ -17,40 +18,75 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen>
 
   late AnimationController _slideController;
   late AnimationController _fadeController;
+  late AnimationController _floatingController;
+  late AnimationController _heroController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _floatingAnimation;
+  late Animation<double> _heroAnimation;
 
   // Custom Colors
+  static const Color primaryYellow = Color(0xFFFFC107);
+  static const Color darkYellow = Color(0xFFFF8F00);
+  static const Color lightYellow = Color(0xFFFFF59D);
+  static const Color darkBlack = Color(0xFF1A1A1A);
+  static const Color lightBlack = Color(0xFF2D2D2D);
+
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _initAnimations();
+  }
+
+  void _initAnimations() {
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
+    _floatingController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+    _heroController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
 
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.5), end: Offset.zero).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.elasticOut),
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
         );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
     );
 
+    _floatingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
+    );
+
+    _heroAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _heroController, curve: Curves.elasticOut),
+    );
+
     _slideController.forward();
     _fadeController.forward();
+    _floatingController.repeat(reverse: true);
+    _heroController.forward();
   }
 
   @override
   void dispose() {
     _slideController.dispose();
     _fadeController.dispose();
+    _floatingController.dispose();
+    _heroController.dispose();
     _departmentNameController.dispose();
     _departmentDescriptionController.dispose();
     super.dispose();
@@ -58,39 +94,128 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen>
 
   Future<void> _saveDepartment() async {
     if (_formKey.currentState!.validate()) {
-      final response = await ApiService().addDepartment(
-        _departmentNameController.text,
-        _departmentDescriptionController.text,
-      );
+      setState(() {
+        _isLoading = true;
+      });
 
-      if (response['STS'] == '200') {
-        // Handle success response
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Department added successfully!'),
-            backgroundColor: AppColors.primaryGreen,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
+      try {
+        final response = await ApiService().addDepartment(
+          _departmentNameController.text,
+          _departmentDescriptionController.text,
         );
-        _departmentNameController.clear();
-        _departmentDescriptionController.clear();
-      } else {
-        // Handle error response
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${response['message']}'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+
+        if (response['STS'] == '200') {
+          _showSuccessDialog();
+          _departmentNameController.clear();
+          _departmentDescriptionController.clear();
+        } else {
+          _showSnackBar('Error: ${response['message']}', Colors.red);
+        }
+      } catch (e) {
+        _showSnackBar('Failed to add department', Colors.red);
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            contentPadding: const EdgeInsets.all(24),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primaryYellow, darkYellow],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Success!',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: darkBlack,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Department has been created successfully',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: darkBlack),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primaryYellow, darkYellow],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   Widget _buildCustomTextField({
@@ -104,64 +229,68 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen>
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: primaryYellow.withOpacity(0.1),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        validator: validator,
-        style: const TextStyle(
-          color: AppColors.darkBlack,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
             decoration: BoxDecoration(
-              color: AppColors.primaryYellow.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: lightBlack.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: primaryYellow.withOpacity(0.3)),
             ),
-            child: Icon(icon, color: AppColors.darkYellow, size: 20),
-          ),
-          labelStyle: TextStyle(
-            color: AppColors.darkBlack.withOpacity(0.7),
-            fontWeight: FontWeight.w600,
-          ),
-          hintStyle: TextStyle(color: AppColors.darkBlack.withOpacity(0.4)),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: AppColors.primaryYellow,
-              width: 2,
+            child: TextFormField(
+              controller: controller,
+              maxLines: maxLines,
+              validator: validator,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: InputDecoration(
+                labelText: label,
+                hintText: hint,
+                prefixIcon: Container(
+                  margin: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primaryYellow, darkYellow],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryYellow.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
+                ),
+                labelStyle: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
+              ),
             ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.red, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
           ),
         ),
       ),
@@ -171,329 +300,122 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        height: MediaQuery.of(context).size.height,
+      backgroundColor: darkBlack,
+      body: CustomScrollView(
+        slivers: [_buildAnimatedHeader(), _buildFormContent()],
+      ),
+    );
+  }
+
+  Widget _buildAnimatedHeader() {
+    return SliverAppBar(
+      expandedHeight: 160, // Further reduced height
+      floating: false,
+      pinned: true,
+      backgroundColor: darkBlack,
+      leading: Container(
+        margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.lightYellow.withOpacity(0.3),
-              Colors.white,
-              AppColors.lightYellow.withOpacity(0.1),
-            ],
-          ),
+          color: lightBlack,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: primaryYellow.withOpacity(0.3)),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
+        child: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: primaryYellow),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      flexibleSpace: AnimatedBuilder(
+        animation: _heroAnimation,
+        builder: (context, child) {
+          return FlexibleSpaceBar(
+            background: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    primaryYellow.withOpacity(0.9),
+                    darkYellow.withOpacity(0.8),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 4,
+                  ), // Minimal vertical padding
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Custom App Bar
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.darkBlack,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: const Icon(
-                                Icons.arrow_back_ios_new,
-                                color: AppColors.primaryYellow,
-                                size: 20,
+                      const SizedBox(height: 20), // Fixed small spacing
+                      Transform.scale(
+                        scale:
+                            _heroAnimation.value *
+                            0.8, // Slightly smaller scale
+                        child: AnimatedBuilder(
+                          animation: _floatingAnimation,
+                          builder: (context, child) {
+                            return Transform.translate(
+                              offset: Offset(
+                                0,
+                                3 *
+                                    sin(
+                                      _floatingAnimation.value * 2 * pi,
+                                    ), // Minimal float
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Text(
-                              'Add Department',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.darkBlack,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 8),
-                      Text(
-                        'Create a new department with details',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: AppColors.darkBlack.withOpacity(0.6),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Main Card
-                      Container(
-                        padding: const EdgeInsets.all(32),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              // Department Icon
-                              Container(
-                                width: 80,
-                                height: 80,
+                              child: Container(
+                                padding: const EdgeInsets.all(
+                                  12,
+                                ), // Fixed smaller padding
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.primaryYellow,
-                                      AppColors.darkYellow,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
                                   ),
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primaryYellow
-                                          .withOpacity(0.4),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
                                 ),
                                 child: const Icon(
-                                  Icons.business_center_rounded,
+                                  Icons.add_business_rounded,
+                                  size: 36, // Fixed smaller size
                                   color: Colors.white,
-                                  size: 36,
                                 ),
                               ),
-
-                              const SizedBox(height: 32),
-
-                              // Department Name Field
-                              _buildCustomTextField(
-                                controller: _departmentNameController,
-                                label: 'Department Name',
-                                hint: 'Enter department name',
-                                icon: Icons.domain_rounded,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter department name';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              // Department Description Field
-                              _buildCustomTextField(
-                                controller: _departmentDescriptionController,
-                                label: 'Department Description',
-                                hint: 'Enter department description',
-                                icon: Icons.description_rounded,
-                                maxLines: 4,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter department description';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              // Save Button
-                              Container(
-                                width: double.infinity,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      AppColors.primaryYellow,
-                                      AppColors.darkYellow,
-                                    ],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primaryYellow
-                                          .withOpacity(0.4),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _saveDepartment,
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          const Icon(
-                                            Icons.save_rounded,
-                                            color: Colors.white,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          const Text(
-                                            'Save Department',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 16),
-
-                              // Clear Button
-                              Container(
-                                width: double.infinity,
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: AppColors.lightBlack.withOpacity(
-                                      0.3,
-                                    ),
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      _departmentNameController.clear();
-                                      _departmentDescriptionController.clear();
-                                    },
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Container(
-                                      alignment: Alignment.center,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.clear_rounded,
-                                            color: AppColors.lightBlack,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Clear Fields',
-                                            style: TextStyle(
-                                              color: AppColors.lightBlack,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
                       ),
-
-                      const SizedBox(height: 32),
-
-                      // Quick Tips Card
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: AppColors.darkBlack,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                      const SizedBox(height: 8), // Minimal spacing
+                      Flexible(
+                        child: Text(
+                          'Create Department',
+                          style: TextStyle(
+                            fontSize:
+                                20 *
+                                _heroAnimation.value, // Smaller fixed font size
+                            fontWeight: FontWeight.bold,
+                            color: darkBlack,
+                            letterSpacing: 0.8,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryYellow.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.lightbulb_rounded,
-                                color: AppColors.primaryYellow,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Quick Tip',
-                                    style: TextStyle(
-                                      color: AppColors.primaryYellow,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Use clear, descriptive names and detailed descriptions for better department management.',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                      ),
+                      Flexible(
+                        child: Text(
+                          'Build your organizational structure',
+                          style: TextStyle(
+                            fontSize:
+                                12 *
+                                _heroAnimation.value, // Smaller fixed font size
+                            color: darkBlack.withOpacity(0.8),
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -501,8 +423,379 @@ class _AddDepartmentScreenState extends State<AddDepartmentScreen>
                 ),
               ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFormContent() {
+    return SliverToBoxAdapter(
+      child: AnimatedBuilder(
+        animation: _slideAnimation,
+        builder: (context, child) {
+          return SlideTransition(
+            position: _slideAnimation,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // Main Form Card
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.white, lightYellow.withOpacity(0.3)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryYellow.withOpacity(0.2),
+                            blurRadius: 25,
+                            offset: const Offset(0, 15),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(30),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(32),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.9),
+                                  lightYellow.withOpacity(0.1),
+                                ],
+                              ),
+                            ),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                children: [
+                                  // Animated Icon
+                                  AnimatedBuilder(
+                                    animation: _floatingAnimation,
+                                    builder: (context, child) {
+                                      return Transform.rotate(
+                                        angle:
+                                            0.1 *
+                                            sin(
+                                              _floatingAnimation.value * 2 * pi,
+                                            ),
+                                        child: Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                primaryYellow,
+                                                darkYellow,
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: primaryYellow
+                                                    .withOpacity(0.4),
+                                                blurRadius: 15,
+                                                offset: const Offset(0, 8),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.business_center_rounded,
+                                            color: Colors.white,
+                                            size: 36,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 32),
+
+                                  // Department Name Field
+                                  _buildCustomTextField(
+                                    controller: _departmentNameController,
+                                    label: 'Department Name',
+                                    hint: 'Enter department name',
+                                    icon: Icons.domain_rounded,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter department name';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+
+                                  // Department Description Field
+                                  _buildCustomTextField(
+                                    controller:
+                                        _departmentDescriptionController,
+                                    label: 'Department Description',
+                                    hint: 'Enter department description',
+                                    icon: Icons.description_rounded,
+                                    maxLines: 4,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter department description';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+
+                                  const SizedBox(height: 32),
+
+                                  // Action Buttons
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Container(
+                                          height: 56,
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: primaryYellow.withOpacity(
+                                                0.5,
+                                              ),
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                          ),
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: () {
+                                                _departmentNameController
+                                                    .clear();
+                                                _departmentDescriptionController
+                                                    .clear();
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              child: const Center(
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.clear_rounded,
+                                                      color: darkBlack,
+                                                      size: 20,
+                                                    ),
+                                                    SizedBox(width: 8),
+                                                    Text(
+                                                      'Clear',
+                                                      style: TextStyle(
+                                                        color: darkBlack,
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Container(
+                                          height: 56,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                primaryYellow,
+                                                darkYellow,
+                                              ],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: primaryYellow
+                                                    .withOpacity(0.4),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 6),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Material(
+                                            color: Colors.transparent,
+                                            child: InkWell(
+                                              onTap: _isLoading
+                                                  ? null
+                                                  : _saveDepartment,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              child: Center(
+                                                child: _isLoading
+                                                    ? const SizedBox(
+                                                        width: 24,
+                                                        height: 24,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              color:
+                                                                  Colors.white,
+                                                              strokeWidth: 2,
+                                                            ),
+                                                      )
+                                                    : const Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        children: [
+                                                          Icon(
+                                                            Icons.save_rounded,
+                                                            color: Colors.white,
+                                                            size: 20,
+                                                          ),
+                                                          SizedBox(width: 8),
+                                                          Text(
+                                                            'Create Department',
+                                                            style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Pro Tips Card
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: lightBlack,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: primaryYellow.withOpacity(0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 15,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [primaryYellow, darkYellow],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.tips_and_updates_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Pro Tips',
+                                style: TextStyle(
+                                  color: primaryYellow,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTipItem(
+                            'Use clear, descriptive names for easy identification',
+                          ),
+                          _buildTipItem(
+                            'Include detailed descriptions for better understanding',
+                          ),
+                          _buildTipItem(
+                            'Consider the department\'s role in your organization',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTipItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: primaryYellow,
+              borderRadius: BorderRadius.circular(3),
+            ),
           ),
-        ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

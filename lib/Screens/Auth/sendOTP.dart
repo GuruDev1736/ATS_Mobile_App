@@ -1,7 +1,6 @@
 import 'package:ata_mobile/DioService/api_service.dart';
 import 'package:ata_mobile/Screens/Auth/OTPVerification.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:async';
 
 // Step 1: Email Input Screen
