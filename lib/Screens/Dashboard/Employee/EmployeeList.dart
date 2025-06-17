@@ -217,7 +217,11 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
       MaterialPageRoute(
         builder: (context) => UpdateEmployeeScreen(employee: employee),
       ),
-    );
+    ).then((value) {
+      if (value == "updated") {
+        _loadEmployees();
+      }
+    });
   }
 
   void _deleteEmployee(int employeeId) {

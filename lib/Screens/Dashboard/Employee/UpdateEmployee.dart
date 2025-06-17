@@ -454,7 +454,7 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
 
       if (response['STS'] == '200') {
         _showSnackBar('Employee updated successfully!', AppColors.primaryGreen);
-        Navigator.pop(context, true); // Return true to indicate success
+        Navigator.pop(context, 'updated');
       } else {
         _showSnackBar(
           'Failed to update employee: ${response['MSG']}',
