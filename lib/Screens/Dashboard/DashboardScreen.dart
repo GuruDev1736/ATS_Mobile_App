@@ -19,6 +19,7 @@ class _DashboardPageState extends State<DashboardPage> {
   late String userName;
   late String userEmail;
   late String userProfileImage;
+  late int userId;
 
   @override
   void initState() {
@@ -40,6 +41,8 @@ class _DashboardPageState extends State<DashboardPage> {
           SharedPrefManager.userProfileImageKey,
         ) ??
         '';
+
+    userId = await SharedPrefManager().getInt(SharedPrefManager.userIdKey) ?? 0;
   }
 
   final List<Widget> _screens = [
@@ -236,66 +239,9 @@ class _DashboardPageState extends State<DashboardPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => EmployeeAttendanceScreen(
-                            employeeId: "1",
-                            employeeName: "Guruprasad",
+                            employeeId: userId,
+                            employeeName: userName,
                           ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  _buildDrawerItem(
-                    icon: Icons.group_add_outlined,
-                    title: 'Add Department',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DepartmentsListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-
-                  _buildDrawerItem(
-                    icon: Icons.group_add_outlined,
-                    title: 'Add HR',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EmployeeListScreen(postion: "HR"),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.group_add_outlined,
-                    title: 'Add Manager',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EmployeeListScreen(postion: "Manager"),
-                        ),
-                      );
-                    },
-                  ),
-
-                  _buildDrawerItem(
-                    icon: Icons.map_outlined,
-                    title: 'Attendance',
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AttendanceDashboard(),
                         ),
                       );
                     },

@@ -18,6 +18,10 @@ dependencies:
   dio: ^5.8.0+1
   image_picker: ^1.0.4
   permission_handler: ^11.3.1
+  google_maps_flutter: ^2.5.0
+  geolocator: ^10.1.0
+  
+  
 
 dev_dependencies:
   flutter_test:

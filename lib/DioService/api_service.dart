@@ -372,4 +372,19 @@ class ApiService {
       throw Exception('$errorMessage');
     }
   }
+
+  Future<Map<String, dynamic>> checkIn(int id) async {
+    try {
+      final response = await _dio.post('attendance/check-in/$id');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
 }

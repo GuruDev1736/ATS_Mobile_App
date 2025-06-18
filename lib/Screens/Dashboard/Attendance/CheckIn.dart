@@ -1,3 +1,4 @@
+import 'package:ata_mobile/Screens/Dashboard/Attendance/LocationScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:math' as math;
@@ -22,7 +23,7 @@ class AttendanceRecord {
 
 class EmployeeAttendanceScreen extends StatefulWidget {
   final String employeeName;
-  final String employeeId;
+  final int employeeId;
 
   const EmployeeAttendanceScreen({
     super.key,
@@ -138,14 +139,27 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
   }
 
   void _handleCheckIn() {
-    setState(() {
-      isCheckedIn = true;
-      checkInTime = DateTime.now();
-      checkOutTime = null;
-      currentWorkingTime = Duration.zero;
+    final result = Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationBasedAttendanceScreen(
+          employeeName: widget.employeeName,
+          employeeId: widget.employeeId,
+        ),
+      ),
+    );
+
+    result.then((value) {
+      if (value['isCheckedIn'] == true) {
+        setState(() {
+          isCheckedIn = true;
+          checkInTime = DateTime.now();
+          currentWorkingTime = Duration.zero; // Reset working time
+        });
+        _showSuccessDialog('Checked In Successfully!');
+        _startWorkingTimeTimer();
+      }
     });
-    _startWorkingTimeTimer();
-    _showSuccessDialog('Checked In Successfully!');
   }
 
   void _handleCheckOut() {
