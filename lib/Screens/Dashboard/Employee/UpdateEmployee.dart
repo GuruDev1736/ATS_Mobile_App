@@ -10,7 +10,6 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:ui';
 
 class Department {
   final int id;

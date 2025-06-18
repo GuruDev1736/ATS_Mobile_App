@@ -1,4 +1,6 @@
+import 'package:ata_mobile/Screens/Auth/login.dart';
 import 'package:ata_mobile/Screens/Dashboard/Attendance/AttendanceDashboard.dart';
+import 'package:ata_mobile/Screens/Dashboard/Attendance/CheckIn.dart';
 import 'package:ata_mobile/Screens/Dashboard/Department/showDepartment.dart';
 import 'package:ata_mobile/Screens/Dashboard/Employee/EmployeeList.dart';
 import 'package:ata_mobile/Utilities/SharedPrefManager.dart';
@@ -224,6 +226,82 @@ class _DashboardPageState extends State<DashboardPage> {
                     });
                   },
                 ),
+                if (role == 'ROLE_EMPLOYEE') ...[
+                  _buildDrawerItem(
+                    icon: Icons.person_add_outlined,
+                    title: 'Attendance',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EmployeeAttendanceScreen(
+                            employeeId: "1",
+                            employeeName: "Guruprasad",
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add Department',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DepartmentsListScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add HR',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EmployeeListScreen(postion: "HR"),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.group_add_outlined,
+                    title: 'Add Manager',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              EmployeeListScreen(postion: "Manager"),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildDrawerItem(
+                    icon: Icons.map_outlined,
+                    title: 'Attendance',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AttendanceDashboard(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+
                 if (role == 'ROLE_ADMIN') ...[
                   _buildDrawerItem(
                     icon: Icons.person_add_outlined,
@@ -378,8 +456,11 @@ class _DashboardPageState extends State<DashboardPage> {
                 backgroundColor: Colors.yellow.shade400,
               ),
               onPressed: () {
-                Navigator.of(context).pop();
-                // Handle logout logic here
+                SharedPrefManager().clearAll();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginPage()),
+                );
               },
               child: Text('Logout', style: TextStyle(color: Colors.black)),
             ),

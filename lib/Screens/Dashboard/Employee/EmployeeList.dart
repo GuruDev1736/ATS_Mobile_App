@@ -395,7 +395,7 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 30),
                       Icon(
                         Icons.people_rounded,
                         size: 60 * _headerAnimation.value,
@@ -498,23 +498,30 @@ class _EmployeeListScreenState extends State<EmployeeListScreen>
   }
 
   Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, color: darkBlack, size: 30),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: darkBlack,
+    return Flexible(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: darkBlack, size: 30),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: darkBlack,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 14, color: darkBlack.withOpacity(0.8)),
-        ),
-      ],
+          Text(
+            label,
+            style: TextStyle(fontSize: 14, color: darkBlack.withOpacity(0.8)),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ],
+      ),
     );
   }
 
