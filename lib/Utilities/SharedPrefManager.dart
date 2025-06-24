@@ -24,6 +24,8 @@ class SharedPrefManager {
   static const String userProfileImageKey = 'user_profile_image';
   static const String userPasswordKey = 'user_password';
   static const String rememberMeKey = 'remember_me';
+  static const String checkInTimeKey = 'check_in_time';
+  static const String checkOutTimeKey = 'check_out_time';
 
   // Ensure prefs are available
   Future<SharedPreferences> get _instancePrefs async =>
@@ -96,5 +98,11 @@ class SharedPrefManager {
   Future<void> clearAll() async {
     final prefs = await _instancePrefs;
     await prefs.clear();
+  }
+
+  // Remove specific key
+  Future<void> removeKey(String key) async {
+    final prefs = await _instancePrefs;
+    await prefs.remove(key);
   }
 }

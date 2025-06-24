@@ -13,18 +13,35 @@ class DashboardPage extends StatefulWidget {
   _DashboardPageState createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage>
+    with TickerProviderStateMixin {
   int _selectedIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late String userName;
   late String userEmail;
   late String userProfileImage;
   late int userId;
+  late String userRole;
+
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _initializeAnimations();
+  }
+
+  void _initializeAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
   }
 
   void _loadUserData() async {
@@ -41,28 +58,31 @@ class _DashboardPageState extends State<DashboardPage> {
           SharedPrefManager.userProfileImageKey,
         ) ??
         '';
-
     userId = await SharedPrefManager().getInt(SharedPrefManager.userIdKey) ?? 0;
+    userRole =
+        await SharedPrefManager().getString(SharedPrefManager.userRoleKey) ??
+        '';
+    setState(() {});
   }
 
   final List<Widget> _screens = [
     HomeScreen(),
-    SearchScreen(),
-    NotificationsScreen(),
+    TaskManagementScreen(),
     ProfileScreen(),
   ];
 
-  final List<String> _screenTitles = [
-    'Home',
-    'Search',
-    'Notifications',
-    'Profile',
-  ];
+  final List<String> _screenTitles = ['Dashboard', 'Tasks', 'Profile'];
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -72,83 +92,115 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: AppBar(
         title: Text(
           _screenTitles[_selectedIndex],
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
         ),
         backgroundColor: Colors.yellow.shade400,
-        elevation: 2,
-        iconTheme: IconThemeData(color: Colors.black),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
         actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: Colors.black),
-            onPressed: () {
-              setState(() {
-                _selectedIndex = 1;
-              });
-            },
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.search, color: Colors.black),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+              },
+            ),
           ),
-          IconButton(
-            icon: Stack(
-              children: [
-                Icon(Icons.notifications_outlined, color: Colors.black),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  child: Container(
-                    padding: EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    constraints: BoxConstraints(minWidth: 12, minHeight: 12),
-                    child: Text(
-                      '3',
-                      style: TextStyle(color: Colors.white, fontSize: 8),
-                      textAlign: TextAlign.center,
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Stack(
+                children: [
+                  const Icon(Icons.notifications_outlined, color: Colors.black),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 12,
+                        minHeight: 12,
+                      ),
+                      child: const Text(
+                        '3',
+                        style: TextStyle(color: Colors.white, fontSize: 8),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 2;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _selectedIndex = 2;
-              });
-            },
           ),
         ],
       ),
       drawer: _buildSideDrawer(),
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.yellow.shade700,
-        unselectedItemColor: Colors.black54,
-        selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search_outlined),
-            activeIcon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            activeIcon: Icon(Icons.notifications),
-            label: 'Notifications',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: _screens[_selectedIndex],
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.yellow.shade200.withOpacity(0.3),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          backgroundColor: Colors.transparent,
+          selectedItemColor: Colors.yellow.shade700,
+          unselectedItemColor: Colors.black54,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard_outlined),
+              activeIcon: Icon(Icons.dashboard),
+              label: 'Dashboard',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.task_outlined),
+              activeIcon: Icon(Icons.task),
+              label: 'Tasks',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -158,7 +210,9 @@ class _DashboardPageState extends State<DashboardPage> {
       future: SharedPrefManager().getString(SharedPrefManager.userRoleKey),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return Drawer(child: Center(child: CircularProgressIndicator()));
+          return const Drawer(
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         final role = snapshot.data;
@@ -203,10 +257,10 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
                         userName,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -214,7 +268,10 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                       Text(
                         userEmail,
-                        style: TextStyle(color: Colors.black54, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -231,7 +288,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 if (role == 'ROLE_EMPLOYEE') ...[
                   _buildDrawerItem(
-                    icon: Icons.person_add_outlined,
+                    icon: Icons.access_time_outlined,
                     title: 'Attendance',
                     onTap: () {
                       Navigator.pop(context);
@@ -247,7 +304,6 @@ class _DashboardPageState extends State<DashboardPage> {
                     },
                   ),
                 ],
-
                 if (role == 'ROLE_ADMIN') ...[
                   _buildDrawerItem(
                     icon: Icons.person_add_outlined,
@@ -258,12 +314,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              EmployeeListScreen(postion: "EMP"),
+                              const EmployeeListScreen(postion: "EMP"),
                         ),
                       );
                     },
                   ),
-
                   _buildDrawerItem(
                     icon: Icons.group_add_outlined,
                     title: 'Add Department',
@@ -272,12 +327,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DepartmentsListScreen(),
+                          builder: (context) => const DepartmentsListScreen(),
                         ),
                       );
                     },
                   ),
-
                   _buildDrawerItem(
                     icon: Icons.group_add_outlined,
                     title: 'Add HR',
@@ -287,7 +341,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              EmployeeListScreen(postion: "HR"),
+                              const EmployeeListScreen(postion: "HR"),
                         ),
                       );
                     },
@@ -301,27 +355,26 @@ class _DashboardPageState extends State<DashboardPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              EmployeeListScreen(postion: "Manager"),
+                              const EmployeeListScreen(postion: "Manager"),
                         ),
                       );
                     },
                   ),
-
                   _buildDrawerItem(
                     icon: Icons.map_outlined,
-                    title: 'Attendance',
+                    title: 'Attendance Dashboard',
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AttendanceDashboard(),
+                          builder: (context) => const AttendanceDashboard(),
                         ),
                       );
                     },
                   ),
                 ],
-                Divider(color: Colors.black26),
+                const Divider(color: Colors.black26),
                 _buildDrawerItem(
                   icon: Icons.settings_outlined,
                   title: 'Settings',
@@ -363,11 +416,14 @@ class _DashboardPageState extends State<DashboardPage> {
       leading: Icon(icon, color: Colors.black87),
       title: Text(
         title,
-        style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+        style: const TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
     );
   }
 
@@ -385,14 +441,17 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Logout', style: TextStyle(color: Colors.black)),
-          content: Text(
+          title: const Text('Logout', style: TextStyle(color: Colors.black)),
+          content: const Text(
             'Are you sure you want to logout?',
             style: TextStyle(color: Colors.black54),
           ),
           actions: [
             TextButton(
-              child: Text('Cancel', style: TextStyle(color: Colors.black54)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Colors.black54),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -405,10 +464,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 SharedPrefManager().clearAll();
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
                 );
               },
-              child: Text('Logout', style: TextStyle(color: Colors.black)),
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.black),
+              ),
             ),
           ],
         );
@@ -417,7 +479,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-// Home Screen
+// Enhanced Home Screen with Task & Attendance Focus
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -432,21 +494,25 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
+            // Welcome Section with Time
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(25),
               decoration: BoxDecoration(
-                color: Colors.yellow.shade100,
-                borderRadius: BorderRadius.circular(15),
+                gradient: LinearGradient(
+                  colors: [Colors.yellow.shade300, Colors.yellow.shade100],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.yellow.shade200.withOpacity(0.5),
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -457,30 +523,42 @@ class HomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Welcome Back!',
-                          style: TextStyle(
-                            fontSize: 24,
+                          _getGreeting(),
+                          style: const TextStyle(
+                            fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
                           ),
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 8),
                         Text(
-                          'Have a great day ahead',
-                          style: TextStyle(fontSize: 16, color: Colors.black54),
+                          'Ready to be productive today?',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black.withOpacity(0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _getCurrentTime(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black.withOpacity(0.8),
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.yellow.shade300,
+                      color: Colors.white.withOpacity(0.3),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.wb_sunny_outlined,
-                      size: 30,
+                      _getGreetingIcon(),
+                      size: 35,
                       color: Colors.black,
                     ),
                   ),
@@ -488,101 +566,173 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-            // Stats Cards
-            Text(
-              'Overview',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            SizedBox(height: 15),
-
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 15,
-              mainAxisSpacing: 15,
-              childAspectRatio: 1.2,
+            // Quick Actions
+            Row(
               children: [
-                _buildStatsCard(
-                  icon: Icons.trending_up,
-                  title: 'Revenue',
-                  value: '\$24,500',
-                  change: '+12%',
-                  isPositive: true,
+                Expanded(
+                  child: _buildQuickActionCard(
+                    icon: Icons.task_alt,
+                    title: 'My Tasks',
+                    subtitle: '5 pending',
+                    color: Colors.blue,
+                    onTap: () {},
+                  ),
                 ),
-                _buildStatsCard(
-                  icon: Icons.people_outline,
-                  title: 'Users',
-                  value: '1,234',
-                  change: '+8%',
-                  isPositive: true,
-                ),
-                _buildStatsCard(
-                  icon: Icons.shopping_cart_outlined,
-                  title: 'Orders',
-                  value: '456',
-                  change: '-3%',
-                  isPositive: false,
-                ),
-                _buildStatsCard(
-                  icon: Icons.analytics_outlined,
-                  title: 'Growth',
-                  value: '23%',
-                  change: '+15%',
-                  isPositive: true,
+                const SizedBox(width: 15),
+                Expanded(
+                  child: _buildQuickActionCard(
+                    icon: Icons.access_time,
+                    title: 'Check In',
+                    subtitle: 'Start work',
+                    color: Colors.green,
+                    onTap: () {},
+                  ),
                 ),
               ],
             ),
 
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-            // Recent Activity
+            // Today's Overview
             Text(
-              'Recent Activity',
+              'Today\'s Overview',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: Colors.black,
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
 
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 15,
+              mainAxisSpacing: 15,
+              childAspectRatio: 1.3,
+              children: [
+                _buildStatsCard(
+                  icon: Icons.assignment_turned_in,
+                  title: 'Completed',
+                  value: '8',
+                  subtitle: 'Tasks',
+                  color: Colors.green,
+                ),
+                _buildStatsCard(
+                  icon: Icons.pending_actions,
+                  title: 'Pending',
+                  value: '5',
+                  subtitle: 'Tasks',
+                  color: Colors.orange,
+                ),
+                _buildStatsCard(
+                  icon: Icons.schedule,
+                  title: 'Work Hours',
+                  value: '7.5h',
+                  subtitle: 'Today',
+                  color: Colors.blue,
+                ),
+                _buildStatsCard(
+                  icon: Icons.trending_up,
+                  title: 'Productivity',
+                  value: '92%',
+                  subtitle: 'This week',
+                  color: Colors.purple,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good Morning!';
+    if (hour < 17) return 'Good Afternoon!';
+    return 'Good Evening!';
+  }
+
+  IconData _getGreetingIcon() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return Icons.wb_sunny;
+    if (hour < 17) return Icons.wb_sunny_outlined;
+    return Icons.nightlight_round;
+  }
+
+  String _getCurrentTime() {
+    final now = DateTime.now();
+    final weekday = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ][now.weekday - 1];
+    final month = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ][now.month - 1];
+    return '$weekday, $month ${now.day}, ${now.year}';
+  }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Container(
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.yellow.shade100,
-                    blurRadius: 10,
-                    offset: Offset(0, 5),
-                  ),
-                ],
+                color: color.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Column(
-                children: [
-                  _buildActivityItem(
-                    icon: Icons.person_add_outlined,
-                    title: 'New user registered',
-                    time: '2 hours ago',
-                  ),
-                  _buildActivityItem(
-                    icon: Icons.shopping_bag_outlined,
-                    title: 'Order #1234 completed',
-                    time: '4 hours ago',
-                  ),
-                  _buildActivityItem(
-                    icon: Icons.payment_outlined,
-                    title: 'Payment received',
-                    time: '6 hours ago',
-                  ),
-                ],
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.black.withOpacity(0.6),
               ),
             ),
           ],
@@ -595,51 +745,27 @@ class HomeScreen extends StatelessWidget {
     required IconData icon,
     required String title,
     required String value,
-    required String change,
-    required bool isPositive,
+    required String subtitle,
+    required Color color,
   }) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.yellow.shade100,
+            color: color.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: Colors.yellow.shade700, size: 24),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isPositive
-                      ? Colors.green.shade100
-                      : Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  change,
-                  style: TextStyle(
-                    color: isPositive
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Spacer(),
+          Icon(icon, color: color, size: 28),
+          const Spacer(),
           Text(
             value,
             style: TextStyle(
@@ -648,145 +774,371 @@ class HomeScreen extends StatelessWidget {
               color: Colors.black,
             ),
           ),
-          Text(title, style: TextStyle(fontSize: 14, color: Colors.black54)),
+          Text(
+            '$title $subtitle',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.black.withOpacity(0.6),
+            ),
+          ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActivityItem({
-    required IconData icon,
-    required String title,
-    required String time,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.yellow.shade100,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icon, color: Colors.yellow.shade700, size: 20),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(
-        time,
-        style: TextStyle(color: Colors.black54, fontSize: 12),
       ),
     );
   }
 }
 
-// Search Screen
-class SearchScreen extends StatelessWidget {
-  const SearchScreen({super.key});
+// Task Management Screen
+class TaskManagementScreen extends StatefulWidget {
+  const TaskManagementScreen({super.key});
+
+  @override
+  State<TaskManagementScreen> createState() => _TaskManagementScreenState();
+}
+
+class _TaskManagementScreenState extends State<TaskManagementScreen>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.yellow.shade50, Colors.white],
+        ),
+      ),
       child: Column(
         children: [
-          TextField(
-            style: TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              hintText: 'Search...',
-              hintStyle: TextStyle(color: Colors.black54),
-              prefixIcon: Icon(Icons.search, color: Colors.yellow.shade700),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-              filled: true,
-              fillColor: Colors.yellow.shade50,
+          // Task Overview Cards
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildTaskOverviewCard(
+                    'Total Tasks',
+                    '24',
+                    Icons.assignment,
+                    Colors.blue,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildTaskOverviewCard(
+                    'Completed',
+                    '18',
+                    Icons.check_circle,
+                    Colors.green,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildTaskOverviewCard(
+                    'Pending',
+                    '6',
+                    Icons.pending,
+                    Colors.orange,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 20),
-          Expanded(
-            child: Center(
-              child: Text(
-                'Start typing to search...',
-                style: TextStyle(color: Colors.black54, fontSize: 16),
+
+          // Tab Bar
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.yellow.shade100,
+              borderRadius: BorderRadius.circular(25),
+            ),
+            child: TabBar(
+              controller: _tabController,
+              indicator: BoxDecoration(
+                color: Colors.yellow.shade400,
+                borderRadius: BorderRadius.circular(25),
               ),
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.black54,
+              labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+              tabs: const [
+                Tab(text: 'All'),
+                Tab(text: 'Active'),
+                Tab(text: 'Completed'),
+                Tab(text: 'Overdue'),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Task List
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildTaskList('all'),
+                _buildTaskList('active'),
+                _buildTaskList('completed'),
+                _buildTaskList('overdue'),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
 
-// Notifications Screen
-class NotificationsScreen extends StatelessWidget {
-  const NotificationsScreen({super.key});
+  Widget _buildTaskOverviewCard(
+    String title,
+    String count,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            count,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.black.withOpacity(0.6),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTaskList(String type) {
+    final List<Map<String, dynamic>> tasks = _getTasksByType(type);
+
     return ListView.builder(
-      padding: EdgeInsets.all(20),
-      itemCount: 5,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: tasks.length,
       itemBuilder: (context, index) {
+        final task = tasks[index];
         return Container(
-          margin: EdgeInsets.only(bottom: 15),
-          padding: EdgeInsets.all(15),
+          margin: const EdgeInsets.only(bottom: 15),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.yellow.shade100,
-                blurRadius: 5,
-                offset: Offset(0, 2),
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: ListTile(
-            leading: Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.yellow.shade100,
-                shape: BoxShape.circle,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: task['priority_color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      task['priority'],
+                      style: TextStyle(
+                        color: task['priority_color'],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: task['status_color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      task['status'],
+                      style: TextStyle(
+                        color: task['status_color'],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              child: Icon(Icons.notifications, color: Colors.yellow.shade700),
-            ),
-            title: Text(
-              'Notification ${index + 1}',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
+              const SizedBox(height: 15),
+              Text(
+                task['title'],
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            subtitle: Text(
-              'This is a sample notification message.',
-              style: TextStyle(color: Colors.black54),
-            ),
-            trailing: Text(
-              '${index + 1}h ago',
-              style: TextStyle(color: Colors.black54, fontSize: 12),
-            ),
+              const SizedBox(height: 8),
+              Text(
+                task['description'],
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black.withOpacity(0.6),
+                ),
+              ),
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    task['due_date'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.black.withOpacity(0.5),
+                    ),
+                  ),
+                  const Spacer(),
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: Colors.yellow.shade300,
+                    child: Text(
+                      task['assignee'],
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
       },
     );
   }
+
+  List<Map<String, dynamic>> _getTasksByType(String type) {
+    final allTasks = [
+      {
+        'title': 'Complete Mobile App Design',
+        'description': 'Finish the UI/UX design for the mobile application',
+        'priority': 'High',
+        'priority_color': Colors.red,
+        'status': 'In Progress',
+        'status_color': Colors.blue,
+        'due_date': 'Dec 25, 2024',
+        'assignee': 'JD',
+      },
+      {
+        'title': 'API Integration',
+        'description': 'Integrate REST APIs with the mobile app',
+        'priority': 'Medium',
+        'priority_color': Colors.orange,
+        'status': 'Pending',
+        'status_color': Colors.orange,
+        'due_date': 'Dec 30, 2024',
+        'assignee': 'AS',
+      },
+      {
+        'title': 'Database Setup',
+        'description': 'Setup and configure the database schema',
+        'priority': 'High',
+        'priority_color': Colors.red,
+        'status': 'Completed',
+        'status_color': Colors.green,
+        'due_date': 'Dec 20, 2024',
+        'assignee': 'MB',
+      },
+      {
+        'title': 'Testing & QA',
+        'description': 'Perform comprehensive testing of all features',
+        'priority': 'Low',
+        'priority_color': Colors.green,
+        'status': 'Overdue',
+        'status_color': Colors.red,
+        'due_date': 'Dec 15, 2024',
+        'assignee': 'SK',
+      },
+    ];
+
+    switch (type) {
+      case 'active':
+        return allTasks
+            .where((task) => task['status'] == 'In Progress')
+            .toList();
+      case 'completed':
+        return allTasks.where((task) => task['status'] == 'Completed').toList();
+      case 'overdue':
+        return allTasks.where((task) => task['status'] == 'Overdue').toList();
+      default:
+        return allTasks;
+    }
+  }
 }
 
-// Profile Screen
+// Profile Screen remains the same
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           // Profile Header
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: Colors.yellow.shade100,
               borderRadius: BorderRadius.circular(15),
@@ -796,10 +1148,14 @@ class ProfileScreen extends StatelessWidget {
                 CircleAvatar(
                   radius: 50,
                   backgroundColor: Colors.yellow.shade300,
-                  child: Icon(Icons.person, size: 60, color: Colors.black),
+                  child: const Icon(
+                    Icons.person,
+                    size: 60,
+                    color: Colors.black,
+                  ),
                 ),
-                SizedBox(height: 15),
-                Text(
+                const SizedBox(height: 15),
+                const Text(
                   'John Doe',
                   style: TextStyle(
                     fontSize: 24,
@@ -807,7 +1163,7 @@ class ProfileScreen extends StatelessWidget {
                     color: Colors.black,
                   ),
                 ),
-                Text(
+                const Text(
                   'john.doe@email.com',
                   style: TextStyle(fontSize: 16, color: Colors.black54),
                 ),
@@ -815,7 +1171,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
 
           // Profile Menu Items
           _buildProfileMenuItem(
@@ -854,7 +1210,7 @@ class ProfileScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -862,7 +1218,7 @@ class ProfileScreen extends StatelessWidget {
           BoxShadow(
             color: Colors.yellow.shade100,
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -870,9 +1226,12 @@ class ProfileScreen extends StatelessWidget {
         leading: Icon(icon, color: Colors.yellow.shade700),
         title: Text(
           title,
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        trailing: Icon(
+        trailing: const Icon(
           Icons.arrow_forward_ios,
           color: Colors.black54,
           size: 16,

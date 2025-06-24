@@ -387,4 +387,55 @@ class ApiService {
       throw Exception('$errorMessage');
     }
   }
+
+  Future<Map<String, dynamic>> checkOut(int id) async {
+    try {
+      final response = await _dio.post('attendance/check-out/$id');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getTodaysAttendance(int id) async {
+    try {
+      final response = await _dio.get('attendance/user/$id/today');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMonthlyRecord(
+    int id,
+    int month,
+    int year,
+  ) async {
+    try {
+      final response = await _dio.get(
+        'attendance/user/$id?month=$month&year=$year',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
 }

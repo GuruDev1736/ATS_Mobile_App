@@ -50,8 +50,8 @@ class _LocationBasedAttendanceScreenState
 
   // Office location (replace with your actual office coordinates)
   static const LatLng officeLocation = LatLng(
-    18.482008705792893,
-    73.94853851257328,
+    18.48191926205389,
+    73.94860021702955,
   );
   static const double allowedRadius = 10.0; // 10 meters
 
@@ -485,7 +485,7 @@ class _LocationBasedAttendanceScreenState
   Future<void> _handleCheckIn() async {
     if (!isWithinOfficeRadius) return;
 
-    final response = await ApiService().checkIn(widget.employeeId as int);
+    final response = await ApiService().checkIn(widget.employeeId);
     if (response["STS"] == "200") {
       setState(() {
         isCheckedIn = true;
@@ -866,8 +866,9 @@ class _LocationBasedAttendanceScreenState
   }
 
   IconData _getStatusIcon() {
-    if (!isLocationServiceEnabled || !hasLocationPermission)
+    if (!isLocationServiceEnabled || !hasLocationPermission) {
       return Icons.location_off;
+    }
     if (isLocationLoading) return Icons.location_searching;
     if (isWithinOfficeRadius) return Icons.location_on;
     return Icons.location_searching;
