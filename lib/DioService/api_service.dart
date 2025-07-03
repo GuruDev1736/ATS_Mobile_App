@@ -438,4 +438,69 @@ class ApiService {
       throw Exception('$errorMessage');
     }
   }
+
+  Future<Map<String, dynamic>> getTodayOverallAttendance() async {
+    try {
+      final response = await _dio.get('attendance/today/overall');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getWeekOverallAttendance() async {
+    try {
+      final response = await _dio.get('attendance/week/overall');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getMonthOverallAttendance(
+    int month,
+    int year,
+  ) async {
+    try {
+      final response = await _dio.get(
+        'attendance/month/overall?month=$month&year=$year',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getYearOverallAttendance(int year) async {
+    try {
+      final response = await _dio.get('attendance/year/overall?year=$year');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
 }

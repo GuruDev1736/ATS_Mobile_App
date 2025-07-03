@@ -4,7 +4,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:intl/intl.dart';
 
 class LocationBasedAttendanceScreen extends StatefulWidget {

@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   // Reduced animations for better performance
   late AnimationController _fadeController;

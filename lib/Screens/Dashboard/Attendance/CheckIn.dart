@@ -52,7 +52,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
 
   bool isCheckedIn = false;
   bool isCheckedOut = false;
-  bool _hasLoadedData = false;
+  final bool _hasLoadedData = false;
   bool _isLoadingDialogShowing = false;
   bool _isInitialized = false; // Add this flag
 
@@ -342,6 +342,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
 
     if (result != null && result['isCheckedIn'] == true) {
       await _loadAttendanceData();
+      _getMonthlyData();
       if (mounted) {
         _showSuccessDialogDelayed('Checked In Successfully!');
       }
@@ -362,6 +363,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
         setState(() {
           isCheckedOut = true;
         });
+        _getMonthlyData();
         _showSuccessDialogDelayed('Checked Out Successfully!');
       } else {
         String errorMessage = response["MSG"] ?? "Unknown error occurred";
