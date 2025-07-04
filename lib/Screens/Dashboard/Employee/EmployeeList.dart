@@ -36,6 +36,8 @@ class Employee {
   final String shiftEndTime;
   final int departmentId;
   final String departmentName;
+  final int officeId;
+  final String officeName;
 
   Employee({
     required this.id,
@@ -52,6 +54,8 @@ class Employee {
     required this.shiftEndTime,
     required this.departmentId,
     required this.departmentName,
+    required this.officeId,
+    required this.officeName,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -70,6 +74,8 @@ class Employee {
       shiftEndTime: json['shiftEndTime'] ?? '',
       departmentId: json['department']['id'] ?? 0,
       departmentName: json['department']['departmentName'] ?? '',
+      officeId: json['office']['id'] ?? 0,
+      officeName: json['office']['officeName'] ?? '',
     );
   }
 }

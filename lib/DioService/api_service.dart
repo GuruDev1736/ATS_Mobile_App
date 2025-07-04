@@ -155,10 +155,11 @@ class ApiService {
     String shiftStartTime,
     String shiftEndTime,
     int departmentId,
+    int officeId,
   ) async {
     try {
       final response = await _dio.post(
-        'auth/register?departmentId=$departmentId',
+        'auth/register?departmentId=$departmentId&officeId=$officeId',
         data: {
           'fullName': fullName,
           'email': email,
@@ -198,10 +199,11 @@ class ApiService {
     String shiftStartTime,
     String shiftEndTime,
     int departmentId,
+    int officeId,
   ) async {
     try {
       final response = await _dio.post(
-        'auth/HR/register?departmentId=$departmentId',
+        'auth/HR/register?departmentId=$departmentId&officeId=$officeId',
         data: {
           'fullName': fullName,
           'email': email,
@@ -241,10 +243,11 @@ class ApiService {
     String shiftStartTime,
     String shiftEndTime,
     int departmentId,
+    int officeId,
   ) async {
     try {
       final response = await _dio.post(
-        'auth/manager/register?departmentId=$departmentId',
+        'auth/manager/register?departmentId=$departmentId&officeId=$officeId',
         data: {
           'fullName': fullName,
           'email': email,
@@ -288,7 +291,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAllHR() async {
     try {
-      final response = await _dio.get('employee/HR/all');
+      final response = await _dio.get('employee/hr/all');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data;
@@ -344,10 +347,11 @@ class ApiService {
     String shiftStartTime,
     String shiftEndTime,
     int departmentId,
+    int officeId,
   ) async {
     try {
       final response = await _dio.put(
-        'employee/$id?departmentId=$departmentId',
+        'employee/$id?departmentId=$departmentId&officeId=$officeId',
         data: {
           'fullName': fullName,
           'email': email,
@@ -492,6 +496,21 @@ class ApiService {
   Future<Map<String, dynamic>> getYearOverallAttendance(int year) async {
     try {
       final response = await _dio.get('attendance/year/overall?year=$year');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAllOffices() async {
+    try {
+      final response = await _dio.get('office-locations/get-all');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data;

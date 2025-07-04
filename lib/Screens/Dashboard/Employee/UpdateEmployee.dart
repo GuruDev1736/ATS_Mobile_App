@@ -27,6 +27,17 @@ class Department {
   }
 }
 
+class Office {
+  final int id;
+  final String name;
+
+  Office({required this.id, required this.name});
+
+  factory Office.fromJson(Map<String, dynamic> json) {
+    return Office(id: json['id'], name: json['officeName'] ?? '');
+  }
+}
+
 class UpdateEmployeeScreen extends StatefulWidget {
   final Employee employee;
 
@@ -55,6 +66,7 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
   TimeOfDay? _shiftStartTime;
   TimeOfDay? _shiftEndTime;
   int? _selectedDepartmentId;
+  int? _selectedOfficeId;
   int _currentStep = 0;
   ApiService apiService = ApiService();
   String imageUrl = '';
@@ -75,6 +87,7 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
   static const Color lightBlack = Color(0xFF424242);
 
   List<Department> departments = [];
+  List<Office> offices = [];
 
   @override
   void initState() {
@@ -82,6 +95,7 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
     _initializeControllers();
     _initAnimations();
     _loadDepartments();
+    _loadOffice();
   }
 
   void _initializeControllers() {
@@ -98,6 +112,8 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
 
     _joiningDate = widget.employee.joiningDate;
     _selectedDepartmentId = widget.employee.departmentId;
+    _selectedOfficeId = widget.employee.officeId;
+
     imageUrl = widget.employee.profilePic;
 
     // Parse shift times
@@ -190,6 +206,27 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching departments: $e')),
         );
+      }
+    }
+  }
+
+  Future<void> _loadOffice() async {
+    try {
+      final response = await apiService.getAllOffices();
+      if (response['CONTENT'] is List) {
+        setState(() {
+          offices = (response['CONTENT'] as List)
+              .map((item) => Office.fromJson(item))
+              .toList();
+        });
+      } else {
+        throw Exception("Invalid response format");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error fetching offices: $e')));
       }
     }
   }
@@ -448,6 +485,7 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
         _shiftStartTime!.format(context),
         _shiftEndTime!.format(context),
         _selectedDepartmentId!,
+        _selectedOfficeId!,
       );
 
       if (response['STS'] == '200') {
@@ -711,6 +749,8 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
                 const SizedBox(height: 20),
                 _buildDepartmentDropdown(),
                 const SizedBox(height: 20),
+                _buildOfficeDropdown(),
+                const SizedBox(height: 20),
                 _buildDateField(),
               ],
             ),
@@ -880,6 +920,45 @@ class _UpdateEmployeeScreenState extends State<UpdateEmployeeScreen>
           });
         },
         validator: (value) => value == null ? 'Please select department' : null,
+      ),
+    );
+  }
+
+  Widget _buildOfficeDropdown() {
+    return Container(
+      decoration: BoxDecoration(
+        color: lightBlack.withOpacity(0.8),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: primaryYellow.withOpacity(0.3)),
+      ),
+      child: DropdownButtonFormField<int>(
+        value: _selectedOfficeId,
+        style: const TextStyle(color: Colors.white),
+        dropdownColor: lightBlack,
+        decoration: InputDecoration(
+          labelText: 'Office',
+          labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+          prefixIcon: Icon(Icons.business_outlined, color: primaryYellow),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.all(20),
+        ),
+        items: offices
+            .map(
+              (office) => DropdownMenuItem(
+                value: office.id,
+                child: Text(
+                  office.name,
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedOfficeId = value;
+          });
+        },
+        validator: (value) => value == null ? 'Please select office' : null,
       ),
     );
   }

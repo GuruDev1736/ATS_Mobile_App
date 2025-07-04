@@ -27,6 +27,17 @@ class Department {
   }
 }
 
+class Office {
+  final int id;
+  final String name;
+
+  Office({required this.id, required this.name});
+
+  factory Office.fromJson(Map<String, dynamic> json) {
+    return Office(id: json['id'], name: json['officeName'] ?? '');
+  }
+}
+
 class AddEmployeeScreen extends StatefulWidget {
   final String postion;
 
@@ -58,6 +69,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
   TimeOfDay? _shiftStartTime;
   TimeOfDay? _shiftEndTime;
   int? _selectedDepartmentId;
+  int? _selectedOfficeId;
   bool _obscurePassword = true;
   int _currentStep = 0;
 
@@ -75,12 +87,14 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
   static const Color lightBlack = Color(0xFF424242);
 
   List<Department> departments = [];
+  List<Office> offices = [];
 
   @override
   void initState() {
     super.initState();
     _initAnimations();
     _loadDepartments();
+    _loadOffice();
   }
 
   void _initAnimations() {
@@ -138,6 +152,27 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error fetching departments: $e')),
         );
+      }
+    }
+  }
+
+  Future<void> _loadOffice() async {
+    try {
+      final response = await apiService.getAllOffices();
+      if (response['CONTENT'] is List) {
+        setState(() {
+          offices = (response['CONTENT'] as List)
+              .map((item) => Office.fromJson(item))
+              .toList();
+        });
+      } else {
+        throw Exception("Invalid response format");
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error fetching offices: $e')));
       }
     }
   }
@@ -425,6 +460,12 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
         );
         return;
       }
+      if (_selectedOfficeId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an office')),
+        );
+        return;
+      }
 
       if (widget.postion == "HR") {
         final response = await apiService.createHR(
@@ -440,6 +481,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
           _shiftStartTime!.format(context),
           _shiftEndTime!.format(context),
           _selectedDepartmentId!,
+          _selectedOfficeId!,
         );
 
         if (response['STS'] == '200') {
@@ -469,6 +511,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
           _shiftStartTime!.format(context),
           _shiftEndTime!.format(context),
           _selectedDepartmentId!,
+          _selectedOfficeId!,
         );
 
         if (response['STS'] == '200') {
@@ -498,6 +541,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
           _shiftStartTime!.format(context),
           _shiftEndTime!.format(context),
           _selectedDepartmentId!,
+          _selectedOfficeId!,
         );
 
         if (response['STS'] == '200') {
@@ -908,6 +952,83 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
     );
   }
 
+  Widget _buildOfficeDropdown() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: DropdownButtonFormField<int>(
+        value: _selectedOfficeId,
+        decoration: InputDecoration(
+          labelText: 'Office',
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primaryYellow.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.business_center,
+              color: darkYellow,
+              size: 20,
+            ),
+          ),
+          labelStyle: TextStyle(
+            color: darkBlack.withOpacity(0.7),
+            fontWeight: FontWeight.w600,
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: primaryYellow, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 16,
+          ),
+        ),
+        items: offices.map((office) {
+          return DropdownMenuItem<int>(
+            value: office.id,
+            child: Text(
+              office.name,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: darkBlack,
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectedOfficeId = value;
+          });
+        },
+        validator: (value) {
+          if (value == null) {
+            return 'Please select an office';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
   Widget _buildStepIndicator() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 20),
@@ -1144,6 +1265,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen>
           ),
 
           _buildDepartmentDropdown(),
+          _buildOfficeDropdown(),
         ],
       ),
     );
