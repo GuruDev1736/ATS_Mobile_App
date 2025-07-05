@@ -522,4 +522,41 @@ class ApiService {
       throw Exception('$errorMessage');
     }
   }
+
+  Future<Map<String, dynamic>> getTodayAttendanceReport() async {
+    try {
+      final response = await _dio.get('attendance/today/excel-report');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
+
+  // Add this method to your ApiService class
+  Future<Map<String, dynamic>> getMonthlyAttendanceReport(
+    int month,
+    int year,
+  ) async {
+    try {
+      final response = await _dio.get(
+        'attendance/monthly/excel-report',
+        queryParameters: {'month': month, 'year': year},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception('Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = e.response?.data['error'] ?? e.message;
+      throw Exception('$errorMessage');
+    }
+  }
 }

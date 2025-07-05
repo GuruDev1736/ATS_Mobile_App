@@ -1,3 +1,4 @@
+import 'package:ata_mobile/Screens/Dashboard/Attendance/AttendanceReportScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:ata_mobile/DioService/api_service.dart';
 import 'dart:math';
@@ -962,7 +963,10 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
       ),
       child: FloatingActionButton.extended(
         onPressed: () {
-          // Navigate to detailed reports
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AttendanceReportScreen()),
+          );
         },
         backgroundColor: Colors.transparent,
         elevation: 0,
