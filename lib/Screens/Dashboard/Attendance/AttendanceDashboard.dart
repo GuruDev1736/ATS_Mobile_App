@@ -1,4 +1,6 @@
 import 'package:ata_mobile/Screens/Dashboard/Attendance/AttendanceReportScreen.dart';
+import 'package:ata_mobile/Screens/Dashboard/Attendance/PresentEmployeesScreen.dart';
+import 'package:ata_mobile/Screens/Dashboard/Attendance/ShowEmployeeScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:ata_mobile/DioService/api_service.dart';
 import 'dart:math';
@@ -103,44 +105,7 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
   String errorMessage = '';
 
   // Default data for other periods
-  final List<Department> departments = [
-    Department(
-      name: 'Engineering',
-      totalEmployees: 45,
-      presentToday: 42,
-      absentToday: 2,
-      lateToday: 1,
-      attendanceRate: 93.3,
-      color: const Color(0xFF4CAF50),
-    ),
-    Department(
-      name: 'Design',
-      totalEmployees: 18,
-      presentToday: 16,
-      absentToday: 1,
-      lateToday: 1,
-      attendanceRate: 88.9,
-      color: const Color(0xFF2196F3),
-    ),
-    Department(
-      name: 'Marketing',
-      totalEmployees: 25,
-      presentToday: 23,
-      absentToday: 2,
-      lateToday: 0,
-      attendanceRate: 92.0,
-      color: const Color(0xFF9C27B0),
-    ),
-    Department(
-      name: 'Sales',
-      totalEmployees: 32,
-      presentToday: 28,
-      absentToday: 3,
-      lateToday: 1,
-      attendanceRate: 87.5,
-      color: const Color(0xFFFF5722),
-    ),
-  ];
+  final List<Department> departments = [];
 
   @override
   void initState() {
@@ -310,6 +275,89 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
         isLoading = false;
       });
     }
+  }
+
+  // Extract employees from API response based on type
+  List<Employee> _getEmployeesFromApiData(
+    Map<String, dynamic>? data,
+    String type,
+  ) {
+    if (data == null) return [];
+
+    List<Employee> employees = [];
+    List<dynamic> departmentStats = data["departmentWiseStats"] ?? [];
+
+    for (var dept in departmentStats) {
+      List<dynamic> attendanceRecords = dept["attendanceRecords"] ?? [];
+
+      for (var record in attendanceRecords) {
+        var employee = record["employee"];
+        var recordData = record;
+
+        // Filter based on type
+        bool shouldInclude = false;
+        String status = recordData["status"]?.toString().toUpperCase() ?? "";
+
+        switch (type) {
+          case 'Present':
+            shouldInclude = status == "ON TIME" || status == "LATE";
+            break;
+          case 'Late':
+            shouldInclude = status == "LATE";
+            break;
+          case 'Absent':
+            // For absent employees, you might need a different API endpoint
+            // For now, we'll handle this separately
+            shouldInclude = false;
+            break;
+        }
+
+        if (shouldInclude) {
+          // Convert timestamps to readable format
+          String checkInTime = _formatTimestamp(recordData["checkIn"]);
+          String checkOutTime = recordData["checkOut"] != null
+              ? _formatTimestamp(recordData["checkOut"])
+              : "";
+
+          employees.add(
+            Employee(
+              id: employee["id"].toString(),
+              name: employee["fullName"] ?? "",
+              department: employee["department"]["departmentName"] ?? "",
+              position: employee["designation"] ?? "",
+              checkInTime: checkInTime,
+              location: employee["office"]["address"] ?? "",
+              profilePic: employee["profile_pic"] ?? "",
+              workingHours: recordData["workingHours"] ?? "0h 0m",
+              status: status == "LATE" ? "Late Arrival" : "In Office",
+              type: type,
+              reason: status == "LATE" ? "Late arrival" : "",
+              onBreak:
+                  false, // This would need to be determined from another field
+            ),
+          );
+        }
+      }
+    }
+
+    return employees;
+  }
+
+  // Helper method to format timestamp
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return "";
+
+    try {
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+      return "${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}";
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // Helper method to get absent employees (you might need a separate API call)
+  List<Employee> _getAbsentEmployees() {
+    return [];
   }
 
   // Convert API data to Department objects
@@ -602,7 +650,6 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
               ? _getOverallStats(monthAttendanceData!)
               : selectedPeriod == 'This Year' && yearAttendanceData != null
               ? _getOverallStats(yearAttendanceData!)
-              // Default to overall stats if no specific data is available
               : _getOverallStats(null);
 
           final totalEmployees = stats['totalPresent']! + stats['totalAbsent']!;
@@ -619,6 +666,24 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
           final latePercentage = totalEmployees > 0
               ? (stats['totalLate']! / totalEmployees * 100).toStringAsFixed(1)
               : '0.0';
+
+          // Get current data based on selected period
+          Map<String, dynamic>? currentData;
+          switch (selectedPeriod) {
+            case 'Today':
+              currentData = todayAttendanceData;
+              break;
+            case 'This Week':
+              currentData = weekAttendanceData;
+              break;
+            case 'This Month':
+              currentData = monthAttendanceData;
+              break;
+            case 'This Year':
+              currentData = yearAttendanceData;
+              break;
+          }
+
           return Container(
             height: 130,
             margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -629,12 +694,31 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
                     offset: Offset(0, 50 * (1 - _cardAnimation.value)),
                     child: Opacity(
                       opacity: _cardAnimation.value,
-                      child: _buildOverviewCard(
-                        'Total Present',
-                        stats['totalPresent'].toString(),
-                        Icons.check_circle_rounded,
-                        const Color(0xFF4CAF50),
-                        '$presentPercentage%',
+                      child: InkWell(
+                        onTap: () {
+                          final presentEmployees = _getEmployeesFromApiData(
+                            currentData,
+                            'Present',
+                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PresentEmployeesScreen(
+                                period: selectedPeriod,
+                                totalCount: stats['totalPresent']!,
+                                type: 'Present',
+                                employees: presentEmployees,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _buildOverviewCard(
+                          'Total Present',
+                          stats['totalPresent'].toString(),
+                          Icons.check_circle_rounded,
+                          const Color(0xFF4CAF50),
+                          '$presentPercentage%',
+                        ),
                       ),
                     ),
                   ),
@@ -645,12 +729,29 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
                     offset: Offset(0, 50 * (1 - _cardAnimation.value)),
                     child: Opacity(
                       opacity: _cardAnimation.value,
-                      child: _buildOverviewCard(
-                        'Total Absent',
-                        stats['totalAbsent'].toString(),
-                        Icons.cancel_rounded,
-                        Colors.red,
-                        '$absentPercentage%',
+                      child: InkWell(
+                        onTap: () {
+                          final absentEmployees =
+                              _getAbsentEmployees(); // You'll need to implement this
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PresentEmployeesScreen(
+                                period: selectedPeriod,
+                                totalCount: stats['totalAbsent']!,
+                                type: 'Absent',
+                                employees: absentEmployees,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _buildOverviewCard(
+                          'Total Absent',
+                          stats['totalAbsent'].toString(),
+                          Icons.cancel_rounded,
+                          Colors.red,
+                          '$absentPercentage%',
+                        ),
                       ),
                     ),
                   ),
@@ -661,12 +762,31 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
                     offset: Offset(0, 50 * (1 - _cardAnimation.value)),
                     child: Opacity(
                       opacity: _cardAnimation.value,
-                      child: _buildOverviewCard(
-                        'Late Arrivals',
-                        stats['totalLate'].toString(),
-                        Icons.access_time_rounded,
-                        Colors.orange,
-                        '$latePercentage%',
+                      child: InkWell(
+                        onTap: () {
+                          final lateEmployees = _getEmployeesFromApiData(
+                            currentData,
+                            'Late',
+                          );
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PresentEmployeesScreen(
+                                period: selectedPeriod,
+                                totalCount: stats['totalLate']!,
+                                type: 'Late',
+                                employees: lateEmployees,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _buildOverviewCard(
+                          'Late Arrivals',
+                          stats['totalLate'].toString(),
+                          Icons.access_time_rounded,
+                          Colors.orange,
+                          '$latePercentage%',
+                        ),
                       ),
                     ),
                   ),

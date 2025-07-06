@@ -223,7 +223,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
             );
           }
 
-          String status = "On Time";
+          String status = record["status"] ?? "Absent";
 
           return AttendanceRecord(
             id: record["id"],
@@ -795,7 +795,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen>
     for (AttendanceRecord record in monthlyRecords) {
       if (record.checkInTime != null) {
         presentDays++;
-        if (record.status == 'Late') {
+        if (record.status == 'LATE') {
           lateDays++;
         }
       }
