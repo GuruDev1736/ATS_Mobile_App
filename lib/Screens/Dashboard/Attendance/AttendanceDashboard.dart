@@ -332,8 +332,9 @@ class _AttendanceDashboardState extends State<AttendanceDashboard>
               status: status == "LATE" ? "Late Arrival" : "In Office",
               type: type,
               reason: status == "LATE" ? "Late arrival" : "",
-              onBreak:
-                  false, // This would need to be determined from another field
+              onBreak: false,
+              phoneNumber: employee["phoneNo"] ?? "",
+              email: employee["email"] ?? "",
             ),
           );
         }

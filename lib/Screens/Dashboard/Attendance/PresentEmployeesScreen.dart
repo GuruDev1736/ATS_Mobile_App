@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PresentEmployeesScreen extends StatefulWidget {
   final String period;
@@ -160,6 +161,88 @@ class _PresentEmployeesScreenState extends State<PresentEmployeesScreen>
     _staggerController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    if (phoneNumber.isEmpty) {
+      _showErrorDialog('Phone number not available');
+      return;
+    }
+
+    final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+
+    try {
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        _showErrorDialog('Could not launch phone dialer');
+      }
+    } catch (e) {
+      _showErrorDialog('Error launching phone dialer: $e');
+    }
+  }
+
+  // Add SMS functionality
+  Future<void> _sendSMS(String phoneNumber) async {
+    if (phoneNumber.isEmpty) {
+      _showErrorDialog('Phone number not available');
+      return;
+    }
+
+    final Uri smsUri = Uri(scheme: 'sms', path: phoneNumber);
+
+    try {
+      if (await canLaunchUrl(smsUri)) {
+        await launchUrl(smsUri);
+      } else {
+        _showErrorDialog('Could not launch SMS');
+      }
+    } catch (e) {
+      _showErrorDialog('Error launching SMS: $e');
+    }
+  }
+
+  // Add WhatsApp functionality
+  Future<void> _sendWhatsApp(String phoneNumber) async {
+    if (phoneNumber.isEmpty) {
+      _showErrorDialog('Phone number not available');
+      return;
+    }
+
+    // Remove any non-numeric characters and ensure proper format
+    String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    if (!cleanNumber.startsWith('+')) {
+      cleanNumber = '+$cleanNumber';
+    }
+
+    final Uri whatsappUri = Uri.parse('https://wa.me/$cleanNumber');
+
+    try {
+      if (await canLaunchUrl(whatsappUri)) {
+        await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
+      } else {
+        _showErrorDialog('WhatsApp not installed');
+      }
+    } catch (e) {
+      _showErrorDialog('Error launching WhatsApp: $e');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: lightBlack,
+        title: const Text('Error', style: TextStyle(color: Colors.white)),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: TextStyle(color: primaryYellow)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -1066,8 +1149,7 @@ class _PresentEmployeesScreenState extends State<PresentEmployeesScreen>
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
-                              // Add message functionality
+                              _sendSMS(employee.phoneNumber);
                             },
                             icon: const Icon(Icons.message_rounded),
                             label: const Text('Message'),
@@ -1081,12 +1163,36 @@ class _PresentEmployeesScreenState extends State<PresentEmployeesScreen>
                             ),
                           ),
                         ),
+
                         const SizedBox(width: 12),
                         Expanded(
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.pop(context);
-                              // Add call functionality
+                              _sendWhatsApp(employee.phoneNumber);
+                            },
+                            icon: const Icon(Icons.chat_bubble_outlined),
+                            label: const Text('WhatsApp'),
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: const Color.fromARGB(
+                                255,
+                                17,
+                                204,
+                                23,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              _makePhoneCall(employee.phoneNumber);
                             },
                             icon: const Icon(Icons.phone_rounded),
                             label: const Text('Call'),
@@ -1215,6 +1321,8 @@ class Employee {
   final String type;
   final String reason;
   final bool onBreak;
+  final String phoneNumber;
+  final String email;
 
   Employee({
     required this.id,
@@ -1229,6 +1337,8 @@ class Employee {
     required this.type,
     required this.reason,
     required this.onBreak,
+    required this.phoneNumber,
+    required this.email,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -1245,6 +1355,8 @@ class Employee {
       type: json['type'] ?? '',
       reason: json['reason'] ?? '',
       onBreak: json['onBreak'] ?? false,
+      phoneNumber: json['phoneNo'] ?? '',
+      email: json['email'] ?? '',
     );
   }
 
@@ -1262,6 +1374,8 @@ class Employee {
       'type': type,
       'reason': reason,
       'onBreak': onBreak,
+      'phoneNo': phoneNumber,
+      'email': email,
     };
   }
 }
