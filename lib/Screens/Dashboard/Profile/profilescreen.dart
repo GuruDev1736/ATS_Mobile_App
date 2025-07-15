@@ -516,8 +516,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _userData['department']['departmentName'] ??
-                              'Department',
+                          _userData['department'] != null &&
+                                  _userData['department']['departmentName'] !=
+                                      null
+                              ? _userData['department']['departmentName']
+                              : 'Department',
                           style: const TextStyle(
                             fontSize: 14,
                             color: darkBlack,

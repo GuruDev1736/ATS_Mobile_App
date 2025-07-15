@@ -4,6 +4,7 @@ import 'package:ata_mobile/Screens/Dashboard/Attendance/CheckIn.dart';
 import 'package:ata_mobile/Screens/Dashboard/Department/showDepartment.dart';
 import 'package:ata_mobile/Screens/Dashboard/Employee/EmployeeList.dart';
 import 'package:ata_mobile/Screens/Dashboard/Home/HomeScreen.dart';
+import 'package:ata_mobile/Screens/Dashboard/Office/ShowOffice.dart';
 import 'package:ata_mobile/Screens/Dashboard/Profile/profilescreen.dart';
 import 'package:ata_mobile/Screens/Dashboard/Task/TaskScreen.dart';
 import 'package:ata_mobile/Screens/Dashboard/Employee/UserManagementScreen.dart';
@@ -317,6 +318,19 @@ class _DashboardPageState extends State<DashboardPage>
                         context,
                         MaterialPageRoute(
                           builder: (context) => const AttendanceDashboard(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.work_outline,
+                    title: 'Office',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ShowOffice(),
                         ),
                       );
                     },
